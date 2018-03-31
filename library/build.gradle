@@ -17,4 +17,4 @@ dependencies {
     compile "com.android.support:design:$supportLibVersion"
 }
 
-apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
+//apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
