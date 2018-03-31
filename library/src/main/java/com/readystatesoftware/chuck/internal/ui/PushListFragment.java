@@ -27,7 +27,6 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,23 +35,22 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.readystatesoftware.chuck.R;
-import com.readystatesoftware.chuck.internal.data.ChuckContentProvider;
-import com.readystatesoftware.chuck.internal.data.HttpTransaction;
+import com.readystatesoftware.chuck.internal.data.PushContentProvider;
+import com.readystatesoftware.chuck.internal.data.PushTransaction;
 import com.readystatesoftware.chuck.internal.support.NotificationHelper;
 import com.readystatesoftware.chuck.internal.support.SQLiteUtils;
 
-public class TransactionListFragment extends Fragment implements
+public class PushListFragment extends Fragment implements
         SearchView.OnQueryTextListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private String currentFilter;
     private OnListFragmentInteractionListener listener;
-    private TransactionAdapter adapter;
+    private PushAdapter adapter;
 
-    public TransactionListFragment() {
-    }
+    public PushListFragment() {}
 
-    public static TransactionListFragment newInstance() {
-        return new TransactionListFragment();
+    public static PushListFragment newInstance() {
+        return new PushListFragment();
     }
 
     @Override
@@ -64,14 +62,14 @@ public class TransactionListFragment extends Fragment implements
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.chuck_fragment_transaction_list, container, false);
+        View view = inflater.inflate(R.layout.chuck_fragment_push_list, container, false);
         if (view instanceof RecyclerView) {
             Context context = view.getContext();
             RecyclerView recyclerView = (RecyclerView) view;
             recyclerView.setLayoutManager(new LinearLayoutManager(context));
             recyclerView.addItemDecoration(new DividerItemDecoration(getContext(),
                     DividerItemDecoration.VERTICAL));
-            adapter = new TransactionAdapter(getContext(), listener);
+            adapter = new PushAdapter(getContext(), listener);
             recyclerView.setAdapter(adapter);
         }
         return view;
@@ -86,12 +84,12 @@ public class TransactionListFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListFragmentInteractionListener) {
-            listener = (OnListFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
-        }
+//        if (context instanceof OnListFragmentInteractionListener) {
+//            listener = (OnListFragmentInteractionListener) context;
+//        } else {
+//            throw new RuntimeException(context.toString()
+//                    + " must implement OnListFragmentInteractionListener");
+//        }
     }
 
     @Override
@@ -113,34 +111,32 @@ public class TransactionListFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.clear) {
-            getContext().getContentResolver().delete(ChuckContentProvider.TRANSACTION_URI, null, null);
+            getContext().getContentResolver().delete(PushContentProvider.TRANSACTION_URI, null, null);
             NotificationHelper.clearBuffer();
             return true;
         } else if (item.getItemId() == R.id.browse_sql) {
             SQLiteUtils.browseDatabase(getContext());
             return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
-        return false;
-//        } else {
-//            return super.onOptionsItemSelected(item);
-//        }
     }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader loader = new CursorLoader(getContext());
-        loader.setUri(ChuckContentProvider.TRANSACTION_URI);
-        if (!TextUtils.isEmpty(currentFilter)) {
-            if (TextUtils.isDigitsOnly(currentFilter)) {
-                loader.setSelection("responseCode LIKE ?");
-                loader.setSelectionArgs(new String[]{currentFilter + "%"});
-            } else {
-                loader.setSelection("path LIKE ?");
-                loader.setSelectionArgs(new String[]{"%" + currentFilter + "%"});
-            }
-        }
-        loader.setProjection(HttpTransaction.PARTIAL_PROJECTION);
-        loader.setSortOrder("requestDate DESC");
+        loader.setUri(PushContentProvider.TRANSACTION_URI);
+//        if (!TextUtils.isEmpty(currentFilter)) {
+//            if (TextUtils.isDigitsOnly(currentFilter)) {
+//                loader.setSelection("responseCode LIKE ?");
+//                loader.setSelectionArgs(new String[]{ currentFilter + "%" });
+//            } else {
+//                loader.setSelection("path LIKE ?");
+//                loader.setSelectionArgs(new String[]{ "%" + currentFilter + "%" });
+//            }
+//        }
+        loader.setProjection(PushTransaction.PARTIAL_PROJECTION);
+        loader.setSortOrder("responseDate DESC");
         return loader;
     }
 
@@ -167,6 +163,6 @@ public class TransactionListFragment extends Fragment implements
     }
 
     public interface OnListFragmentInteractionListener {
-        void onListFragmentInteraction(HttpTransaction item);
+        void onListFragmentInteraction(PushTransaction item);
     }
 }

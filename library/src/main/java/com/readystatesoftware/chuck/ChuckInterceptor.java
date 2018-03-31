@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Headers;
@@ -71,7 +73,7 @@ public final class ChuckInterceptor implements Interceptor {
     }
 
     private static final String LOG_TAG = "ChuckInterceptor";
-    private static final Period DEFAULT_RETENTION = Period.ONE_WEEK;
+    private static final Period DEFAULT_RETENTION = Period.ONE_DAY;
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
     private final Context context;
@@ -79,15 +81,32 @@ public final class ChuckInterceptor implements Interceptor {
     private RetentionManager retentionManager;
     private boolean showNotification;
     private long maxContentLength = 250000L;
+    private volatile String account;
+    private HttpLogReceiver httpLogReceiver;
+    private ExecutorService executorService;
 
     /**
      * @param context The current Context.
      */
     public ChuckInterceptor(Context context) {
+        this(context, "");
+    }
+
+    public ChuckInterceptor(Context context, String account) {
         this.context = context.getApplicationContext();
+        this.account = account;
         notificationHelper = new NotificationHelper(this.context);
         showNotification = true;
         retentionManager = new RetentionManager(this.context, DEFAULT_RETENTION);
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
     }
 
     /**
@@ -112,7 +131,15 @@ public final class ChuckInterceptor implements Interceptor {
         this.maxContentLength = max;
         return this;
     }
-  
+
+    public HttpLogReceiver getHttpLogReceiver() {
+        return httpLogReceiver;
+    }
+
+    public void setHttpLogReceiver(HttpLogReceiver httpLogReceiver) {
+        this.httpLogReceiver = httpLogReceiver;
+    }
+
     /**
      * Set the retention period for HTTP transaction data captured by this interceptor.
      * The default is one week.
@@ -125,13 +152,15 @@ public final class ChuckInterceptor implements Interceptor {
         return this;
     }
 
-    @Override public Response intercept(Chain chain) throws IOException {
+    @Override
+    public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
 
         RequestBody requestBody = request.body();
         boolean hasRequestBody = requestBody != null;
 
-        HttpTransaction transaction = new HttpTransaction();
+        final HttpTransaction transaction = new HttpTransaction();
+        transaction.setAccount(account);
         transaction.setRequestDate(new Date());
 
         transaction.setMethod(request.method());
@@ -216,6 +245,15 @@ public final class ChuckInterceptor implements Interceptor {
         }
 
         update(transaction, transactionUri);
+
+        if (httpLogReceiver != null) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    httpLogReceiver.seadHttpLog(transaction);
+                }
+            });
+        }
 
         return response;
     }
@@ -310,5 +348,9 @@ public final class ChuckInterceptor implements Interceptor {
             }
         }
         return response.body().source();
+    }
+
+    public interface HttpLogReceiver {
+        void seadHttpLog(HttpTransaction httpTransaction);
     }
 }

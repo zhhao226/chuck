@@ -24,6 +24,7 @@ public class LocalCupboard {
 
     static {
         getInstance().register(HttpTransaction.class);
+        getInstance().register(PushTransaction.class);
     }
 
     public static Cupboard getInstance() {

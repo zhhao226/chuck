@@ -22,6 +22,8 @@
     <string name="chuck_overview">Overview</string>
     <string name="chuck_request">Request</string>
     <string name="chuck_response">Response</string>
+    <string name="chuck_http">Http</string>
+    <string name="chuck_push">Push</string>
     <string name="chuck_url">URL</string>
     <string name="chuck_method">Method</string>
     <string name="chuck_protocol">Protocol</string>

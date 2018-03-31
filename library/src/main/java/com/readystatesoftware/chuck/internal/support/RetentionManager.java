@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.readystatesoftware.chuck.ChuckInterceptor;
 import com.readystatesoftware.chuck.internal.data.ChuckContentProvider;
+import com.readystatesoftware.chuck.internal.data.PushContentProvider;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ public class RetentionManager {
             if (isCleanupDue(now)) {
                 Log.i(LOG_TAG, "Performing data retention maintenance...");
                 deleteSince(getThreshold(now));
+                deletePushSince(getThreshold(now));
                 updateLastCleanup(now);
             }
         }
@@ -57,6 +59,12 @@ public class RetentionManager {
     private void deleteSince(long threshold) {
         int rows = context.getContentResolver().delete(ChuckContentProvider.TRANSACTION_URI,
                 "requestDate <= ?", new String[] { String.valueOf(threshold) });
+        Log.i(LOG_TAG, rows + " transactions deleted");
+    }
+
+    private void deletePushSince(long threshold){
+        int rows = context.getContentResolver().delete(PushContentProvider.TRANSACTION_URI,
+                "responseDate <= ?", new String[] { String.valueOf(threshold) });
         Log.i(LOG_TAG, rows + " transactions deleted");
     }
 

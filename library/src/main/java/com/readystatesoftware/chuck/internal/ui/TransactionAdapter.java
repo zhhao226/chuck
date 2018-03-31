@@ -71,6 +71,7 @@ class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHol
                 holder.host.setText(transaction.getHost());
                 holder.start.setText(transaction.getRequestStartTimeString());
                 holder.ssl.setVisibility(transaction.isSsl() ? View.VISIBLE : View.GONE);
+                holder.account.setText(transaction.getAccount());
                 if (transaction.getStatus() == HttpTransaction.Status.Complete) {
                     holder.code.setText(String.valueOf(transaction.getResponseCode()));
                     holder.duration.setText(transaction.getDurationString());
@@ -147,6 +148,7 @@ class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHol
         public final TextView duration;
         public final TextView size;
         public final ImageView ssl;
+        public final TextView account;
         HttpTransaction transaction;
 
         ViewHolder(View view) {
@@ -159,6 +161,7 @@ class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.ViewHol
             duration = (TextView) view.findViewById(R.id.duration);
             size = (TextView) view.findViewById(R.id.size);
             ssl = (ImageView) view.findViewById(R.id.ssl);
+            account = (TextView) view.findViewById(R.id.account);
         }
     }
 }

@@ -15,7 +15,9 @@
  */
 package com.readystatesoftware.chuck.sample;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -23,6 +25,11 @@ import android.view.View;
 
 import com.readystatesoftware.chuck.Chuck;
 import com.readystatesoftware.chuck.ChuckInterceptor;
+import com.readystatesoftware.chuck.internal.data.LocalCupboard;
+import com.readystatesoftware.chuck.internal.data.PushContentProvider;
+import com.readystatesoftware.chuck.internal.data.PushTransaction;
+
+import java.util.Date;
 
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -40,6 +47,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 doHttpActivity();
+                for (int i = 0; i < 10; i++) {
+                    PushTransaction pushTransaction = new PushTransaction();
+//                    pushTransaction.set_id(2345L * 10 * i);
+                    pushTransaction.setContent("adajkdankdankdakkdak");
+                    pushTransaction.setAccount("1245666666");
+                    pushTransaction.setCode("1122");
+                    pushTransaction.setResponseDate(new Date(System.currentTimeMillis() + 10 * 1000));
+                    create(pushTransaction);
+                }
             }
         });
         findViewById(R.id.launch_chuck_directly).setOnClickListener(new View.OnClickListener() {
@@ -66,11 +82,19 @@ public class MainActivity extends AppCompatActivity {
     private void doHttpActivity() {
         SampleApiService.HttpbinApi api = SampleApiService.getInstance(getClient(this));
         Callback<Void> cb = new Callback<Void>() {
-            @Override public void onResponse(Call call, Response response) {}
-            @Override public void onFailure(Call call, Throwable t) { t.printStackTrace(); }
+            @Override
+            public void onResponse(Call call, Response response) {
+            }
+
+            @Override
+            public void onFailure(Call call, Throwable t) {
+                t.printStackTrace();
+            }
         };
         api.get().enqueue(cb);
         api.post(new SampleApiService.Data("posted")).enqueue(cb);
+
+
         api.patch(new SampleApiService.Data("patched")).enqueue(cb);
         api.put(new SampleApiService.Data("put")).enqueue(cb);
         api.delete().enqueue(cb);
@@ -96,5 +120,13 @@ public class MainActivity extends AppCompatActivity {
         api.deny().enqueue(cb);
         api.cache("Mon").enqueue(cb);
         api.cache(30).enqueue(cb);
+    }
+
+    private Uri create(PushTransaction transaction) {
+        ContentValues values = LocalCupboard.getInstance().withEntity(PushTransaction.class).toContentValues(transaction);
+        Uri uri = this.getContentResolver().insert(PushContentProvider.TRANSACTION_URI, values);
+//        transaction.set_id(Long.valueOf(uri.getLastPathSegment()));
+
+        return uri;
     }
 }
